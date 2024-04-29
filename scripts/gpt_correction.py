@@ -5,8 +5,8 @@ import json
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument("--data_directory", dest='data_directory', help="transcribed data directory file_folder")
-parser.add_argument("--output_directory", dest= "output_directory", help = "output file folder")
+parser.add_argument("--input", dest='data_directory', help="transcribed data")
+parser.add_argument("--output", dest= "output_directory", help = "output file")
 parser.add_argument("--gpt_version", dest= "gpt_version", help = "what version of gpt", default = "gpt-3.5-turbo")
 parser.add_argument("--gpt_content", dest= "gpt_content", help = "instructions for gpt", default = "you are a helpful assistant, carefully fixing errors in documents")
 parser.add_argument("--prompt", dest= "prompt", help = "what is your prompt for gpt?", default = "this is a historical text from a digitized archive. it has been created using optical character recognition, introducing numerous errors to a text that initially had none. without adding any new material, please correct the text by fixing the errors created by OCR")

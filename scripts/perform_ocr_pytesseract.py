@@ -12,8 +12,7 @@ parser.add_argument("--output_file", dest= "output_file", help = "output_ocr_tex
 args = parser.parse_args()
 
 image_dir = args.input_file
-
-
+output_dictionary = {}
 for filename in os.listdir(image_dir):
     if not filename.endswith('.txt'):
         print(filename)
@@ -29,7 +28,10 @@ for filename in os.listdir(image_dir):
         file_name = "pytesseract" + new_name + ".txt"
         print(file_name) 
         output_path = os.path.join(args.output_file, file_name) 
-        print(output_path)
-        with open( output_path, "w") as out_file:
-            out_file.write(text)
-            print("wrote file!")
+        
+        output_dictionary[output_path] = text
+        
+    
+with open(args.output_file, "w") as out_file:
+            json.dump(output_dictionary,out_file)
+            

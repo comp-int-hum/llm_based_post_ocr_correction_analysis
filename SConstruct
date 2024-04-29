@@ -22,14 +22,15 @@ import pickle
 # any variables you want to use here, with reasonable default values, but when you want
 # to change/override the default values, do so in the "custom.py" file (see it for an
 # example, changing the number of folds).
-vars = Variables("custom.py")
+vars = Variables("/home/sbacker2/projects/post_ocr_correction/custom.py")
 vars.AddVariables(
    # ("OUTPUT_WIDTH", "", 5000),
-   # ("MODEL_TYPES", "", ["naive_bayes", "neural"]),
+     ("USE_GRID", "", False),
+     ("GPT_VERSION", "", ["gpt-3.5-turbo", "gpt-4", "gpt-4-turbo"]),
+    ("API_KEY", "", ""),
    # ("PARAMETER_VALUES", "", [0.1, 0.5, 0.9]),
-   # ("DATASETS", "", ["A", "B", "C"]),
-   # ("FOLDS", "", 1),
-)
+    ("DATASETS", "", ["/home/sbacker2/projects/post_ocr_correction/data/images", "/home/sbacker2/projects/post_ocr_correction/data/texts"]),
+    ("PROMPTS", "", ["This is a historical text from a digitized archive. It has been created using optical character recognition, introducing numerous errors to a text that initially had none. without adding any new material, please correct the text by fixing the errors created by OCR"]))
 
 # Methods on the environment object are used all over the place, but it mostly serves to
 # manage the variables (see above) and builders (see below).
@@ -46,20 +47,20 @@ env = Environment(
     # automatically populate MODEL_TYPE, we'll do this with for-loops).
     BUILDERS={
         "Perform_OCR" : Builder(
-            action="python scripts/ --outputs ${TARGETS[0]}"
+            action="python scripts/perform_ocr_pytesseract.py --input_file ${INPUT} --output_file ${TARGETS[0]}"
         ),
-        "ShuffleData" : Builder(
-            action="python scripts/shuffle_data.py --dataset ${SOURCES[0]} --outputs ${TARGETS}"
+        "ComparePerformanceInitial" : Builder(
+            action="python scripts/compare_performance.py --test_directory ${SOURCES[0]} --control_directory ${CONTROL} --output_file ${TARGETS[0]}"
         ),
-        "TrainModel" : Builder(
-            action="python scripts/train_model.py --parameter_value ${PARAMETER_VALUE} --model_type ${MODEL_TYPE} --train ${SOURCES[0]} --dev ${SOURCES[1]} --outputs ${TARGETS[0]}"            
+        "GPTCorrect" : Builder(
+            action="python scripts/gpt_correction.py --prompt ${PROMPTS} --gpt_version ${MODEL_TYPE} --input ${SOURCES[0]} --output ${TARGETS[0]} --api_key ${API_KEY}"            
         ),
-        "ApplyModel" : Builder(
-            action="python scripts/apply_model.py --model ${SOURCES[0]} --test ${SOURCES[1]} --outputs ${TARGETS[0]}"
-        ),
-        "GenerateReport" : Builder(
-            action="python scripts/generate_report.py --experimental_results ${SOURCES} --outputs ${TARGETS[0]}"
+        "Compare_Performance_GPT" : Builder(
+            action="python scripts/compare_performance_json.py --control_directory ${SOURCES[0]} --test_directory ${SOURCES[1]} --output_file ${TARGETS[0]}"
         )
+       # "GenerateReport" : Builder(
+        #    action="python scripts/generate_report.py --experimental_results ${SOURCES} --outputs ${TARGETS[0]}"
+       # )
     }
 )
 
@@ -80,44 +81,30 @@ env = Environment(
 # Note also how the outputs ("targets") from earlier invocation are used as the inputs
 # ("sources") to later ones, and how some outputs are also gathered into the "results"
 # variable, so they can be summarized together after each experiment runs.
-results = []
-for dataset_name in env["DATASETS"]:
-    data = env.CreateData("work/${DATASET_NAME}/data.txt", [], DATASET_NAME=dataset_name)
-    for fold in range(1, env["FOLDS"] + 1):
-        train, dev, test = env.ShuffleData(
-            [
-                "work/${DATASET_NAME}/${FOLD}/train.txt",
-                "work/${DATASET_NAME}/${FOLD}/dev.txt",
-                "work/${DATASET_NAME}/${FOLD}/test.txt",
-            ],
-            data,
-            FOLD=fold,
-            DATASET_NAME=dataset_name,
-        )
-        for model_type in env["MODEL_TYPES"]:
-            for parameter_value in env["PARAMETER_VALUES"]:
-                model = env.TrainModel(
-                    "work/${DATASET_NAME}/${FOLD}/${MODEL_TYPE}/${PARAMETER_VALUE}/model.bin",
-                    [train, dev],
-                    FOLD=fold,
-                    DATASET_NAME=dataset_name,
-                    MODEL_TYPE=model_type,
-                    PARAMETER_VALUE=parameter_value,
-                )
-                results.append(
-                    env.ApplyModel(
-                        "work/${DATASET_NAME}/${FOLD}/${MODEL_TYPE}/${PARAMETER_VALUE}/applied.txt",
-                        [model, test],
-                        FOLD=fold,
-                        DATASET_NAME=dataset_name,
-                        MODEL_TYPE=model_type,
-                        PARAMETER_VALUE=parameter_value,                        
-                    )
-                )
+
+tesseract_results = []
+for dataset in env["DATASETS"]:
+    #print(dataset)
+    #dataset_image = dataset[0]
+    #print(dataset_image)
+    tesseract_results.append(env.Perform_OCR("work/pytesseract_ocr.json", INPUT = "/home/sbacker2/projects/post_ocr_correction/data/images"))
+
+initial_comparison = []
+for tesseract_result in tesseract_results:
+    initial_comparison.append(env.ComparePerformanceInitial("work/initial_comparison.json", tesseract_result, CONTROL= "/home/sbacker2/projects/post_ocr_correction/data/texts/"))
+
+gpt_correct = []
+print(env["GPT_VERSION"])
+for model in env["GPT_VERSION"]:
+    for prompt in env["PROMPTS"]:
+    	for result in tesseract_results:
+    	    gpt_correct.append([env.GPTCorrect("work/gpt_correction_{}.json".format(model), result, MODEL_TYPE = model, API_KEY = env["API_KEY"]), prompt, model,result])  			
+	    
+GPT_Compared = []
+for comparison in initial_comparison:
+    for next_result in gpt_correct:
+        GPT_Compared.append(env.Compare_Performance_GPT("work/compared_with_gpt{}.json".format(next_result[2]), [next_result[3],next_result[0]]))  
 
 # Use the list of applied model outputs to generate an evaluation report (table, plot,
 # f-score, confusion matrix, whatever makes sense).
-report = env.GenerateReport(
-    "work/report.txt",
-    results
-)
+

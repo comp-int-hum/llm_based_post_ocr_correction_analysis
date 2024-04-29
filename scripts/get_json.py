@@ -3,7 +3,7 @@ import requests
 import time
 import os 
 
-url = "https://www.loc.gov/item/mss154040161/"
+url = "https://www.loc.gov/item/mss154040167/"
 basepath = "/home/sbacker2/projects/post_ocr_correction/data/"
 total_page_image = []
 
@@ -42,5 +42,5 @@ for item, key in dict_of_images.items():
             print("wrote {}".format(item))
 
 for item, key in dict_of_texts.items():
-     with open ("/home/sbacker2/projects/post_ocr_correction/data/{}".format(item), "w") as the_file:  
+     with open ("/home/sbacker2/projects/post_ocr_correction/data/texts/{}".format(item), "w") as the_file:  
             the_file.write(key)                                              
