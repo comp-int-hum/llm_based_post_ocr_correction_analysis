@@ -26,10 +26,10 @@ for filename in os.listdir(image_dir):
         new_name = filename.strip(".jpg")
         print(new_name)
         file_name = "pytesseract" + new_name + ".txt"
-        print(file_name) 
-        output_path = os.path.join(args.output_file, file_name) 
+        #print(file_name) 
+        #output_path = os.path.join(args.output_file, file_name) 
         
-        output_dictionary[output_path] = text
+        output_dictionary[file_name] = text
         
     
 with open(args.output_file, "w") as out_file:

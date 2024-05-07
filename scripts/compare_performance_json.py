@@ -14,13 +14,13 @@ parser.add_argument("--output_file", dest = "output_folder", help = "where the o
 args = parser.parse_args()
 control_files = []
 test_files = []
+output_dictionary = {}
+
+
 
 with open(args.control_directory, "r") as the_file:  
     control_files = json.load(the_file)
-
-
-for x in control_files:
-    print(x)
+    print(len(control_files))
 
     
 # new test files should always be in a specific json format
@@ -29,7 +29,7 @@ for x in control_files:
 
 with open(args.test_directory, "r") as in_file:
     local_files = json.load(in_file)
-
+    print(len(local_files))
 
         #for key, item in local_file.items():
          #   print(key)
@@ -43,39 +43,40 @@ output_dictionary = {}
 
 
 
-for key, gpt_item in local_files.items():
-    print(key)
-    print(gpt_item)
-    entry = key.split("/work/")
-   # print(entry)
-    entry = entry[1]
-    entry = entry.split("corrected")
+for key_1, gpt_item in local_files.items():
+    print(key_1)
+    #print(gpt_item)
+    entry = key_1.split("corrected")
+    print(entry)
+   
     entry_name = entry[0]
-
-    #print(type(entry_name))
-    entry_name = entry_name.split("pytesseract")
-    #print(entry_name)
-    entry_name = entry_name[-1]                    
-    #print(entry_name)
+    print(entry_name)
     for key, item in control_files.items():
         new_x = key.rstrip(".txt")
         print(new_x)
         if entry_name == new_x:
-        
+            print("matched")
             test_text = gpt_item["choices"][0]["message"]["content"]
+            
             control_text = item["control_text"]
             
             
             error = cer(control_text, test_text)
-            name = key["model"]    
-            local_dict = {name : { "text" : test_text, "CER" : error}} 
+            print(error)
+            model_name = gpt_item["model"]
+            new_key = key_1.split("pytesseract")
+            print(new_key)
+            new_key = new_key[-1]
+            output_dictionary[new_key] = {"model_name" : model_name, "text" : test_text, "CER" : error}
+            
+            #local_dict = {name : { "text" : test_text, "CER" : error}} 
 
-            control_files[key].update(local_dict)
+            #control_files[key].update(local_dict)
 
             
 
                 
                 
 with open (args.output_folder, "w") as out_file:
-    json.dump(control_files, out_file, indent=4)
+    json.dump(output_dictionary, out_file, indent=4)
 

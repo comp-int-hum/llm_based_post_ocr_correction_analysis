@@ -32,7 +32,9 @@ output_dictionary = {}
 
 for key, item  in test_dictionary.items():
     entry_name = key.lstrip("pytesseract")
+    print(entry_name)
     for x in control_files:
+        print(x)
         if entry_name == x:
             with open (os.path.join(args.control_directory,x), "r") as control_file:
                 test_text = item
@@ -41,6 +43,7 @@ for key, item  in test_dictionary.items():
                 #error = output.cer
                 error = cer(control_text, test_text)
                 local_dict = {"control_text" : control_text, "pytesseract_text" : { "text" : test_text, "CER" : error}}
+                print(local_dict)
                 output_dictionary[x] = local_dict 
 
                         
