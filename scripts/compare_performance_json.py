@@ -56,18 +56,19 @@ for key_1, gpt_item in local_files.items():
         print(new_x)
         if entry_name == new_x:
             print("matched")
-            test_text = gpt_item["choices"][0]["message"]["content"]
+            if gpt_item.get("choices"):
+                test_text = gpt_item["choices"][0]["message"]["content"]
             
-            control_text = item["control_text"]
+                control_text = item["control_text"]
             
             
-            error = cer(control_text, test_text)
-            print(error)
-            model_name = gpt_item["model"]
-            new_key = key_1.split("pytesseract")
-            print(new_key)
-            new_key = new_key[-1]
-            output_dictionary[new_key] = {"model_name" : model_name, "text" : test_text, "CER" : error}
+                error = cer(control_text, test_text)
+                print(error)
+                model_name = gpt_item["model"]
+                new_key = key_1.split("pytesseract")
+                print(new_key)
+                new_key = new_key[-1]
+                output_dictionary[new_key] = {"model_name" : model_name, "text" : test_text, "CER" : error}
             
             #local_dict = {name : { "text" : test_text, "CER" : error}} 
 

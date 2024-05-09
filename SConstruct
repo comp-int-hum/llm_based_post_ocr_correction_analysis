@@ -59,7 +59,7 @@ env = Environment(
             action="python scripts/compare_performance_json.py --control_directory ${SOURCES[0]} --test_directory ${SOURCES[1]} --output_file ${TARGETS[0]}"
         ),
         "GenerateReport" : Builder(
-            action="python scripts/condense_output.py --input_docs ${SOURCES[0]} --control_file ${SOURCES[1]} --output_file ${TARGETS[0]} --condensed_output ${TARGETS[1]}"
+            action="python scripts/condense_output.py --input_docs ${SOURCES[0]} --control_file ${SOURCES[1]} --output_file ${TARGETS[0]} --condensed_output ${TARGETS[1]} --control_file ${CONTROL}"
         )
     }
 )
@@ -108,20 +108,20 @@ for comparison in initial_comparison:
         print(corrected_result[1])
         print(corrected_result[3])
         GPT_Compared.append([env.Compare_Performance_GPT("work/compared_with_gpt{}{}.json".format(corrected_result[2],corrected_result[1][0]), [comparison, corrected_result[0]]),comparison, corrected_result])
-        GPT_Compared_Namelist.append("work/compared_with_gpt{}prompt{}.json".format(corrected_result[2],corrected_result[1][0]))
+        GPT_Compared_Namelist.append("work/compared_with_gpt{}{}.json".format(corrected_result[2],corrected_result[1][0]))
 
 #print("this is comparison length")
 #print(len(initial_comparison))
 print("this is namelist length")
 print(len(GPT_Compared_Namelist))
-print("this is namelist")
+print("this is namelist!")
 print(GPT_Compared_Namelist)
-
+print(initial_comparison[0])
 
 
 
 final_report = []
-final_report.append(env.GenerateReport(["work/final_report.json","work/final_report_condensed.json"],[GPT_Compared_Namelist,initial_comparison[0]])) 
+final_report.append(env.GenerateReport(["work/final_report.json","work/final_report_condensed.json"],GPT_Compared_Namelist,CONTROL=initial_comparison[0])) 
 
 
 # Use the list of applied model outputs to generate an evaluation report (table, plot,
