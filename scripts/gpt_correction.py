@@ -48,10 +48,13 @@ for name, text in pytesseract_material.items():
         prompt = prompt + text 
         response_file = chat_with_gpt(prompt)
         print(response_file)
-        name = name.rstrip(".txt")
-        name = name.lstrip("pytesseract")
-        entry = name + "corrected_by_{}".format(args.gpt_version)
-        output_dictionary[entry] = response_file 
+        if "choices" in response_file:
+            text_file = response_file["choices"][0]["message"]["content"]
+
+            name = name.rstrip(".txt")
+            name = name.lstrip("pytesseract")
+            entry = name + "corrected_by_{}".format(args.gpt_version)
+            output_dictionary[entry] = text_file 
 
 with open(args.output_directory, "w") as out_file:
     json.dump(output_dictionary, out_file)

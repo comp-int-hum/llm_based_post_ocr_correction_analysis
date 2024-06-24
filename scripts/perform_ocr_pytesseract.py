@@ -12,6 +12,11 @@ parser.add_argument("--output_file", dest= "output_file", help = "output_ocr_tex
 args = parser.parse_args()
 
 image_dir = args.input_file
+
+pytesseract.pytesseract.tesseract_cmd = r'/data/lhyman6/programs/tesseract/tesseract/bin/tesseract'
+os.environ['TESSDATA_PREFIX'] = '/data/lhyman6/programs/tesseract/tesseract/tessdata'
+
+
 output_dictionary = {}
 for filename in os.listdir(image_dir):
     if not filename.endswith('.txt'):

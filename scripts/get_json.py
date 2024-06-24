@@ -3,7 +3,7 @@ import requests
 import time
 import os 
 
-url = "https://www.loc.gov/item/mss154040167/"
+url = "https://www.loc.gov/item/mss154040163/"
 basepath = "/home/sbacker2/projects/post_ocr_correction/data/"
 total_page_image = []
 

@@ -1,2 +1,7 @@
 steamroller
 jiwer
+cuda-python
+torch
+image
+accelerate
+

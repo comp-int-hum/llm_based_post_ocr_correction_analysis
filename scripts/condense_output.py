@@ -32,11 +32,11 @@ for x in args.input_docs:
         for key, item in local_test_dict.items():
             edited_key = key.split("corrected")
             edited_key = edited_key[0]
-            #print(edited_key)
-            #print("that was edited key")
+            print(edited_key)
+            print("that was edited key")
             for control_key, control_items in control_dictionary.items():
                 new_control_key = control_key.rstrip(".txt")
-             #   print(new_control_key)
+                print(new_control_key)
               #  print("that was control key")
                 if new_control_key == edited_key:
                #     print("Matched!")

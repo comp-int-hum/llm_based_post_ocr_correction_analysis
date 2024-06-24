@@ -28,8 +28,8 @@ with open(args.control_directory, "r") as the_file:
 
 
 with open(args.test_directory, "r") as in_file:
-    local_files = json.load(in_file)
-    print(len(local_files))
+    test_files = json.load(in_file)
+    print(len(test_files))
 
         #for key, item in local_file.items():
          #   print(key)
@@ -42,11 +42,10 @@ output_dictionary = {}
 
 
 
-
-for key_1, gpt_item in local_files.items():
+for key_1, gpt_item in test_files.items():
     print(key_1)
     #print(gpt_item)
-    entry = key_1.split("corrected")
+    entry = key_1.split("corrected_by_")
     print(entry)
    
     entry_name = entry[0]
@@ -56,19 +55,19 @@ for key_1, gpt_item in local_files.items():
         print(new_x)
         if entry_name == new_x:
             print("matched")
-            if gpt_item.get("choices"):
-                test_text = gpt_item["choices"][0]["message"]["content"]
             
-                control_text = item["control_text"]
+            test_text = gpt_item
+            
+            control_text = item["control_text"]
             
             
-                error = cer(control_text, test_text)
-                print(error)
-                model_name = gpt_item["model"]
-                new_key = key_1.split("pytesseract")
-                print(new_key)
-                new_key = new_key[-1]
-                output_dictionary[new_key] = {"model_name" : model_name, "text" : test_text, "CER" : error}
+            error = cer(control_text, test_text)
+            print(error)
+            model_name = entry[1]
+            new_key = key_1.split("pytesseract")
+            print(new_key)
+            new_key = new_key[-1]
+            output_dictionary[new_key] = {"model_name" : model_name, "text" : test_text, "CER" : error}
             
             #local_dict = {name : { "text" : test_text, "CER" : error}} 
 
