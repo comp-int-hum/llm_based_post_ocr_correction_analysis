@@ -14,4 +14,4 @@ those outputs include pytesseract, gpt3.5, gpt4 (both zero shot corrections) -- 
 
 error rates are examined -- comparing traditional methods and more historically-specific questions 
 
-NERs are identified, and compared between methods. The embeddings of these NERs are also compared, simulating potential downstream historical usage. 
+B) NERs are identified, and compared between methods. The embeddings of these NERs are also compared, simulating potential downstream historical usage. 
