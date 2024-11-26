@@ -4,4 +4,8 @@ cuda-python
 torch
 image
 accelerate
-
+levenshtein
+transformers
+spacy
+scikit-learn
+fuzzywuzzy

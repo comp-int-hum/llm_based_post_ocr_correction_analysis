@@ -11,14 +11,17 @@ parser.add_argument("--gpt_version", dest= "gpt_version", help = "what version o
 parser.add_argument("--gpt_content", dest= "gpt_content", help = "instructions for gpt", default = "you are a helpful assistant, carefully fixing errors in documents")
 parser.add_argument("--prompt", dest= "prompt", help = "what is your prompt for gpt?", nargs = "*")
 parser.add_argument("--api_key", dest= "api_key", help = "where is your api key")
+
 args = parser.parse_args()
 
 
+print(args.api_key)
+print("that was the key")
 
 with open(args.api_key, "r") as in_file:
-    
     API_KEY = in_file.read() 
-
+    print(API_KEY)
+    print("THAT WAS THE KEY")
 API_URL = 'https://api.openai.com/v1/chat/completions'
 
 output_dictionary = {}
@@ -40,6 +43,9 @@ def chat_with_gpt(prompt, model= args.gpt_version):
     result['used_prompt'] = prompt 
     return result
 
+
+print("this is the data directory")
+print(args.data_directory)
 with open (args.data_directory, "r") as in_file:
     pytesseract_material = json.load(in_file)
 

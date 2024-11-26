@@ -1,6 +1,7 @@
 import json
 import numpy as np
 import argparse
+from collections import defaultdict
 
 parser = argparse.ArgumentParser()
 
@@ -13,40 +14,58 @@ def load_data(filename):
     with open(filename, 'r') as file:
         return json.load(file)
 
-# Function to calculate statistics for each OCR correction type and return them as a dictionary
-def calculate_statistics(data):
-    # Initialize a dictionary to hold lists of error rates for each correction type
-    error_rates = {}
 
-    # Populate the dictionary with error rates
-    for document in data.values():
-        for method, rate in document.items():
-            if method not in error_rates:
-                error_rates[method] = []
-            error_rates[method].append(rate)
 
-    # Dictionary to hold statistics
-    stats = {}
+overall_dict = load_data(args.data_directory)
 
-    # Calculate statistics for each correction type
-    for method, rates in error_rates.items():
-        rates_array = np.array(rates)
-        stats[method] = {
-            'Average': np.mean(rates_array),
-            'Median': np.median(rates_array),
-            'Standard Deviation': np.std(rates_array)
-        }
 
-    return stats
+# Initialize dictionaries to collect CER, WER, WIL values for each model
+metrics = defaultdict(lambda: defaultdict(list))
 
-# Load data from JSON file
-data = load_data(args.data_directory)
+# Iterate through each dictionary in overall_dict
+for key, entry in overall_dict.items():
+    
+    #print(key)
+    #print(entry.keys())
+    for sub_key, sub_entry in entry.items():
+        print(sub_key)
+        if sub_key == "control_text":
+            continue  # Skip control text as it doesn't have metrics
+        
+        # Determine the model name
+        if sub_key == "pytesseract_text":
+            model_name = "pytesseract"
+        else:
+            #print(sub_entry)
+            model_name = sub_entry.get("model_name", "unknown_model")
+        
+        # Collect the CER, WER, WIL values for this model
+        metrics[model_name]['CER'].append(sub_entry["CER"])
+        metrics[model_name]["NEW_CER"].append(sub_entry["NEW_CER"])
+        metrics[model_name]['WER'].append(sub_entry["WER"])
+        metrics[model_name]["WORD_JACCARD"].append(sub_entry["WORD_JACCARD"])
+        metrics[model_name]['WIL'].append(sub_entry["WIL"])
 
-# Calculate statistics
-statistics = calculate_statistics(data)
+# Function to calculate statistics
+def calculate_statistics(values):
+    return {
+        'average': round(np.mean(values),3),
+        'median': round(np.median(values),3),
+        'std_dev': round(np.std(values), 3)
+    }
 
-# Output statistics to a JSON file
-with open(args.output_directory, 'w') as outfile:
-    json.dump(statistics, outfile, indent=4)
+# Calculate statistics for each model and each metric
+results = defaultdict(lambda: defaultdict(dict))
 
-print("Statistics have been saved to 'statistics_output.json'")
+for model_name, model_metrics in metrics.items():
+    for metric_name, values in model_metrics.items():
+        results[metric_name][model_name] = calculate_statistics(values)
+
+# Convert the results to a dictionary and write to a JSON file
+
+with open(args.output_directory, 'w') as f:
+    json.dump(results, f, indent=4)
+
+
+
+

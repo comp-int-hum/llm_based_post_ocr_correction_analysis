@@ -16,8 +16,8 @@ args = parser.parse_args()
 
 
 with open(args.api_key, "r") as in_file:
+    api_key = in_file.read().strip()  # Strip any surrounding whitespace or newlines
 
-    api_key = in_file.read()
 
 prompt = " ".join(args.prompt)
 
@@ -76,6 +76,7 @@ for x in name_list:
             print(text_file)
             name= x.split("images/")
             name = name[-1]
+            name = name.rstrip(".jpg")
             entry = name + "corrected_by_gpt_4o_image_to_text"
             print(entry)
             print(response.json())
