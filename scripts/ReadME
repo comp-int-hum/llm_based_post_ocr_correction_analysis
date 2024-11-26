@@ -1,0 +1,21 @@
+File Descriptions By Workflow Order (rough)
+
+1) perform ocr pytesseract (this creates pytesseract ocr) 
+
+2) gpt correction — this produces corrections via multiple gpt methods based on the pytesseract output 
+
+3) run bart model base -- correction via bart 
+
+4) run bart model fine tuned (NB -- this might not be the right file) -- run the fine-tuned barts, (fine tuning code with Louis H.) 
+
+5) compare performance -- compare initial pytesseract performance and gold standard 
+
+6) compare performance json -- compare all the other ocr output 
+
+7) condense output -- create output file for the basic comparisons 
+
+8) named entity recognition -- identify NERs in the output 
+
+9) named entity semantic analysis -- getting the embeddings for the ners 
+
+10) create NER embeddings report -- compare the NER output 
