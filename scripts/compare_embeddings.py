@@ -95,16 +95,16 @@ def compare_entities_and_embeddings(ocr_data, control_data):
         #print(thing)
         control_dict[thing["entity"]] = thing.get("embedding")
         
-    # Create dictionaries to map entity names to their embeddings
-    #ocr_dict = {entity["entity"]: entity.get("embedding") for entity in ocr_entities}
-    #control_dict = {entity["entity"]: entity.get("embedding") for entity in control_entities}
-
+    
     # Jaccard Similarity for Named Entities (set comparison of keys)
     jaccard_score_entities = jaccard_similarity(ocr_dict.keys(), control_dict.keys())
 
     # Cosine Similarity for Embeddings (only for matching entities)
+
     error_list = []
+
     cosine_scores = []
+    best_match_list = []
     for entity_name in ocr_dict:
         best_match = None
         best_score = 0
@@ -123,13 +123,17 @@ def compare_entities_and_embeddings(ocr_data, control_data):
         
         
            sim_score = cosine_sim(ocr_embedding, control_embedding)
+
            if sim_score is not None:  # Filter out None values
                cosine_scores.append(sim_score)
            else:
                local_error = [[entity_name, ocr_embedding],[best_match,control_embedding]]
                error_list.append(local_error)
            local_list = [entity_name, best_match]
+           best_match_list.append(best_match)
            matched_entity_list.append(local_list)
+
+    fuzzy_matched_jaccard = jaccard_similarity(best_match_list,control_dict.keys()) 
     # Calculate average cosine similarity only for valid scores
     avg_cosine_similarity = np.mean(cosine_scores) if cosine_scores else 0
 
@@ -137,6 +141,7 @@ def compare_entities_and_embeddings(ocr_data, control_data):
         "jaccard_similarity": jaccard_score_entities,
         "avg_cosine_similarity": avg_cosine_similarity,
         "num_entities": len(ocr_dict),
+        "fuzzy_matched_jaccard" : fuzzy_matched_jaccard,
         "matched_entities" : matched_entity_list,# Optional: Track number of entities in OCR data
         "match_percentage": len(matched_entity_list) / len(control_dict),
         "cosine_scores_count": len(cosine_scores),  # Optional: Track how many embeddings were successfully compared
@@ -180,8 +185,8 @@ def main(args):
 # Argument parser setup
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Compare Named Entities and Embeddings between OCR and Control Texts.")
-    parser.add_argument("--input_file", dest='input_file', type=str, help="Path to input JSON file containing OCR-corrected and control texts.")
-    parser.add_argument("--output_file", dest = "output_file", type=str, help="Path to output JSON file to save the similarity scores.")
+    parser.add_argument("--input", dest='input_file', type=str, help="Path to input JSON file containing OCR-corrected and control texts.")
+    parser.add_argument("--output", dest = "output_file", type=str, help="Path to output JSON file to save the similarity scores.")
     
     args = parser.parse_args()
     main(args)

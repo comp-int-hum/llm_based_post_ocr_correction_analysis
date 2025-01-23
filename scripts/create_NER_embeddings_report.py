@@ -41,7 +41,9 @@ def generate_final_report(results):
 
     # Aggregate the results by method across all documents
     for document_id, document_data in results.items():
+
         for full_method_name, scores in document_data.items():
+
             # Use regex to find the base method name
             match = method_name_pattern.search(full_method_name)
             if match:
@@ -53,18 +55,21 @@ def generate_final_report(results):
                 method_scores[base_method_name] = {
                     "jaccard_scores": [],
                     "cosine_scores": [],
-                    "match_percentage": []
+                    "match_percentage": [],
+                    "fuzzy_matched_jaccard": []
                 }
-    
+
             method_scores[base_method_name]["jaccard_scores"].append(scores["jaccard_similarity"])
             method_scores[base_method_name]["cosine_scores"].append(scores["avg_cosine_similarity"])
-            method_scores[base_method_name]["match_percentage"].append(scores["match_percentage"])  
+            method_scores[base_method_name]["match_percentage"].append(scores["match_percentage"])
+            method_scores[base_method_name]["fuzzy_matched_jaccard"].append(scores["fuzzy_matched_jaccard"])
     # Generate the final report with mean, median, and mode for each method across documents
     final_report = {}
     for method, scores in method_scores.items():
         jaccard_scores = np.array(scores["jaccard_scores"])
         cosine_scores = np.array(scores["cosine_scores"])
         match_percentages = np.array(scores["match_percentage"])
+        fuzzy_matched_jaccard = np.array(scores["fuzzy_matched_jaccard"])
         final_report[method] = {
             "jaccard_similarity": {
                 "mean": np.mean(jaccard_scores) if len(jaccard_scores) > 0 else None,
@@ -80,6 +85,11 @@ def generate_final_report(results):
                 "mean": np.mean(match_percentages) if len(match_percentages) > 0 else None,
                 "median": np.median(match_percentages) if len(match_percentages) > 0 else None,
                 "mode": safe_mode(match_percentages)
+            },
+            "fuzzy_matched_jaccard": {  # New section for match percentage                                                                                                             
+                "mean": np.mean(fuzzy_matched_jaccard) if len(fuzzy_matched_jaccard) > 0 else None,
+                "median": np.median(fuzzy_matched_jaccard) if len(fuzzy_matched_jaccard) > 0 else None,
+                "mode": safe_mode(fuzzy_matched_jaccard)
             }
         }
 
@@ -103,8 +113,8 @@ def main_report(args):
 # Argument parser setup for final report generation
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate final report with aggregated statistics.")
-    parser.add_argument("--results_file", dest='results_file', type=str, help="Path to JSON file with OCR comparison results.")
-    parser.add_argument("--output_report_file", dest='output_report_file', type=str, help="Path to output JSON file for the final report.")
+    parser.add_argument("--input", dest='results_file', type=str, help="Path to JSON file with OCR comparison results.")
+    parser.add_argument("--output", dest='output_report_file', type=str, help="Path to output JSON file for the final report.")
 
     args = parser.parse_args()
     main_report(args)

@@ -32,7 +32,6 @@ vars.AddVariables(
      ("API_KEY", "", ""),
      ("EXISTING_OCR", "", True),
      ("EXISTING_OCR_LOCATION", "", ["/home/sbacker2/projects/post_ocr_correction/data/pytesseract_ocr.json","/home/sbacker2/projects/post_ocr_correction/data/corrected_by_gpt40_image.json","/home/sbacker2/projects/post_ocr_correction/data/gpt_correction_gpt-3.5-turbo-0125.json","/home/sbacker2/projects/post_ocr_correction/data/gpt_correction_gpt-4o.json"]),
-     ("FINE_TUNED_LLAVA_CHECKPOINTS", "", []),
      ("DATASETS", "", [["/home/sbacker2/projects/post_ocr_correction/data/images", "/home/sbacker2/projects/post_ocr_correction/data/texts"]]),
      ("PROMPTS", "", [["prompt_0", "This is a historical text from a digitized archive. It has been created using optical character recognition, introducing numerous errors to a text that initially had none. Without adding any new material or commenting on the quality or contets of the text, please return a corrected version that fixes any errors created by the OCR"]]))
 
@@ -62,15 +61,6 @@ env = Environment(
 	"GPT4OCorrect" : Builder(
 	    action="python scripts/gpt_4o_image.py --prompt ${PROMPT} --input_directory ${INPUT} --output ${TARGETS[0]} --api_key ${API_KEY}"
 	    ),	    
-
-	"LLavaCorrect" : Builder(
-	    action="python scripts/llava_correction.py  --image_directory ${INPUT} --prompt ${PROMPT} --output_file ${TARGETS[0]}"
-	),
-
-	"FineTuned_LLava_Correct" : Builder(
-            action = "python scripts/llava_correction_fine_tuned.py  --image_directory ${INPUT} --prompt ${PROMPT} --output_file ${TARGETS[0]} --checkpoint ${CHECKPOINT}"
-        ),
-
 	"LLavaCorrectRepetition" : Builder(
 	    action = "python scripts/llava_correction_with_repetition_check.py --image_directory ${INPUT} --prompt ${PROMPT} --output_file ${TARGETS[0]}"),
 
@@ -86,9 +76,19 @@ env = Environment(
 	"GenerateReport" : Builder(
             action="python scripts/condense_output.py --input_docs ${SOURCES} --output_file ${TARGETS[0]} --condensed_output ${TARGETS[1]} --control_file ${CONTROL}"
 	    ),
-	    
 	"AnalyzeOutput" : Builder(
-	    action= "python scripts/analyze_error_rates.py --input ${SOURCES[0]} --output ${TARGETS[0]}"
+	    action= "python scripts/analyze_error_rates.py --input ${SOURCES[0]} --output ${TARGETS[0]}"),
+	"Identify_NER": Builder(
+            action= "python scripts/named_entity_recognition.py --input ${SOURCES[0]} --output ${TARGETS[0]}",    
+        ),
+	"Named_Entity_Semantic_Analysis" : Builder(                                                                                                                                                          
+            action= "python scripts/named_entity_semantic_analysis.py --input ${SOURCES[0]} --output ${TARGETS[0]}",                                                                                              
+        ),
+	"Compare_Embeddings": Builder (
+	   action="python scripts/compare_embeddings.py --input ${SOURCES[0]} --output ${TARGETS[0]}",
+	  ), 
+	"NER_Embeddings_Report" : Builder(
+            action= "python scripts/create_NER_embeddings_report.py --input ${SOURCES[0]} --output ${TARGETS[0]}",
         )
     }
 )
@@ -113,8 +113,11 @@ env = Environment(
 
 tesseract_results = []
 
+#this assumes that all of the gpt ocr is being done at the same time, which might need to be changed eventually. 
+
+
 if env["EXISTING_OCR"] == True:
-   tesseract_results.append(env["EXISTING_OCR_LOCATION"])
+   tesseract_results.append(env["EXISTING_OCR_LOCATION"][0])
 else:    
    for dataset in env["DATASETS"]:
        tesseract_results.append(env.Perform_OCR("data/pytesseract_ocr.json",source = [], INPUT = env["IMAGE_LOCATION"]))
@@ -144,7 +147,6 @@ GPT_Compared = []
 Compared_Namelist = []
 
 
-
 for comparison in initial_comparison:
     for corrected_result in gpt_correct:
         GPT_Compared.append([env.Compare_Performance("work/compared_with_gpt{}{}.json".format(corrected_result[2],corrected_result[1][0]), [comparison, corrected_result[0]]),comparison, corrected_result])
@@ -155,36 +157,8 @@ local_prompt = "Please return all of the text contained in this  document. DO NO
 
 input = env["IMAGE_LOCATION"]
 
-#print("PROMPTS:", env["PROMPTS"][0])
-#print("IMAGE_LOCATION:", env["IMAGE_LOCATION"])
 
 
-
-llava_correction_test = env.LLavaCorrect(target = "work/llava_correction.json", source = [], INPUT = input, PROMPT = local_prompt)
-
-llava_repetition = env.LLavaCorrectRepetition(target = "work/llava_correction_repetition.json", source = [], INPUT = input, PROMPT = local_prompt)
-
-llava_compared = env.Compare_Performance("work/compared_with_llava.json", [initial_comparison[0], llava_correction_test])
-llava_repetition_compared = env.Compare_Performance("work/compared_with_llava_repetition.json", [initial_comparison[0], llava_correction_test])
-
-Compared_Namelist.append("work/compared_with_llava.json")
-Compared_Namelist.append("work/compared_with_llava_repetition.json")
-
-
-fine_tuned_llava = []
-
-#for checkpoint in env["FINE_TUNED_LLAVA_CHECKPOINTS"]:
-#    checkpoint_name = checkpoint.split("/")
-#    print(checkpoint_name)
- #   checkpoint_name = checkpoint_name[8]
- #   print(checkpoint_name)
-#    fine_tuned_llava.append([env.FineTuned_LLava_Correct("work/llava_correction_fine_tuned{}.json".format(checkpoint_name), source = [], INPUT = input, PROMPT = local_prompt, CHECKPOINT= checkpoint), checkpoint_name])
-
-#fine_tuned_llava_compared = []
-
-#for output in fine_tuned_llava:
- #   fine_tuned_llava_compared.append(env.Compare_Performance("work/compared_with_llava_fine_tuned{}.json".format(output[1]), [initial_comparison[0], output[0]]))
-  #  Compared_Namelist.append("work/compared_with_llava_fine_tuned{}.json".format(output[1]))    															     
 if env["EXISTING_OCR"] == True:
    gpt_image_to_text = env["EXISTING_OCR_LOCATION"][1]
 else:
@@ -198,8 +172,6 @@ Compared_Namelist.append("work/compared_by_gpt40_image.json")
 corrected_bart = env.Bart_Correct_Base("work/corrected_by_base_bart.json", tesseract_results[0])
 compared_bart = env.Compare_Performance("work/compared_by_base_bart.json", [initial_comparison[0], corrected_bart])
 Compared_Namelist.append("work/compared_by_base_bart.json")
-
-
 
 corrected_bart_fine_tune = []
 compared_bart_fine_tune = []
@@ -218,6 +190,14 @@ final_report = env.GenerateReport(["work/final_report.json","work/final_report_c
 
 Analyzed_Output = env.AnalyzeOutput("work/analyzed_output_report.json", final_report[0])
 
-# Use the list of applied model outputs to generate an evaluation report (table, plot,
-# f-score, confusion matrix, whatever makes sense).
+NER_Embeddings = env.Identify_NER("work/NER_Embeddings.json", final_report[0])
+
+Semantic_NER = env.Named_Entity_Semantic_Analysis("work/Semantic_NER_Embeddings.json", NER_Embeddings[0])
+
+Compared_Embeddings = env.Compare_Embeddings("work/Compared_NER_Embeddings.json", Semantic_NER[0])
+
+Final_Embeddings_Report = env.NER_Embeddings_Report("work/final_embeddings_report.json", Compared_Embeddings[0])
+
+
+
 

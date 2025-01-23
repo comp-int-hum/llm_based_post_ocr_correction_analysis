@@ -19,7 +19,7 @@ def jaccard_similarity(list1, list2):
     set1, set2 = set(list1), set(list2)
     intersection = len(set1.intersection(set2))
     union = len(set1.union(set2))
-    return intersection / union
+    return intersection / set2
 
 def levenshtein_similarity(list1, list2):
     distance = levenshtein_distance(''.join(list1), ''.join(list2))
@@ -115,7 +115,7 @@ for key_1, gpt_item in test_files.items():
             change1 = tr.ReduceToListOfListOfWords()(change)
             #print(change1)
             double_change = tr.ReduceToListOfListOfChars()(change)
-            #print(double_change)
+            print(double_change)
             triple_change = [[]]
             for char in double_change[0]:
                 if char != " ":
@@ -127,6 +127,7 @@ for key_1, gpt_item in test_files.items():
             test_change = tr.RemoveWhiteSpace(replace_by_space=True)(test_change)
             test_change_1 = tr.ReduceToListOfListOfWords()(test_change)
             double_test_change = tr.ReduceToListOfListOfChars()(test_change)
+            print(double_test_change)
             triple_test_change = [[]]
             for char in double_test_change[0]:
                 if char != " ":
