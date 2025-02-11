@@ -168,7 +168,7 @@ if torch.cuda.is_available():
         print("CUDA is available.")
 else:
     print("CUDA is not available.")
-login(token="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")
+login(token= "secret_token_tbd")
 device = "cuda:0"
 
 

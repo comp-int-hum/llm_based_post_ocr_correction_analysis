@@ -22,7 +22,7 @@ bnb_config = BitsAndBytesConfig(
     bnb_4bit_compute_dtype=torch.bfloat16,
 )
 
-access_token = "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" 
+
 
 model = AutoPeftModelForCausalLM.from_pretrained(
     'pykale/llama-2-13b-ocr',
